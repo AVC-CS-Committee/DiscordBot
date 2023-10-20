@@ -4,3 +4,4 @@ src/.env
 src/Credentials.json
 src/Credentials.json
 *.json
+src/Credentials.json
