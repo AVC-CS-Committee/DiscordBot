@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os
 import discord
-# import discord.ext
+#import discord.ext
 from discord.ext import commands
 from discord import app_commands
 import firebase_admin
@@ -28,9 +28,9 @@ from firebase_admin import db, credentials
 # print(ref.get("/coins"))
 
 
-
 # this loads the env file with the API key to be stored
 # locally make sure you have your .env file set
+
 load_dotenv('.env')
 disc_token: str = os.getenv('DISC_TOKEN')
 firebase_url: str = os.getenv('FIREBASE_URL')
@@ -41,7 +41,7 @@ firebase_admin.initialize_app(cred, {"databaseURL": firebase_url})
 intents = discord.Intents.all()
 intents.message_content = True
 
-bot = commands.Bot(command_prefix='!!', intents=intents)
+bot = commands.Bot(command_prefix='!', intents=intents)
 
 ref = db.reference("py/")
 
@@ -64,7 +64,6 @@ async def hello(interaction: discord.Interaction):
 async def add(ctx, arg, arg2):
     arg3 = int(arg) + int(arg2)
     await ctx.send(arg3)
-
 
 @bot.command()
 async def account(ctx, arg):
