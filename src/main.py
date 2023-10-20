@@ -7,8 +7,7 @@ from discord import app_commands
 import firebase_admin
 from firebase_admin import db, credentials
 
-cred = credentials.Certificate("credentials.json")
-firebase_admin.initialize_app(cred, {"databaseURL": "https://discord-bot-test-3c98c-default-rtdb.firebaseio.com/"})
+
 
 # ref = db.reference("py/")
 # users_ref = ref.child('Users')
@@ -34,12 +33,17 @@ firebase_admin.initialize_app(cred, {"databaseURL": "https://discord-bot-test-3c
 # locally make sure you have your .env file set
 load_dotenv('.env')
 disc_token: str = os.getenv('DISC_TOKEN')
+firebase_url: str = os.getenv('FIREBASE_URL')
+
+cred = credentials.Certificate("credentials.json")
+firebase_admin.initialize_app(cred, {"databaseURL": firebase_url})
 
 intents = discord.Intents.all()
 intents.message_content = True
 
 bot = commands.Bot(command_prefix='!!', intents=intents)
 
+ref = db.reference("py/")
 
 @bot.event
 async def on_ready():
@@ -66,7 +70,6 @@ async def add(ctx, arg, arg2):
 async def account(ctx, arg):
     if arg == "join":
         username = ctx.author.name
-        ref = db.reference("py/")
         users_ref = ref.child('Users')
         users_ref.update({
             username: {
@@ -77,9 +80,8 @@ async def account(ctx, arg):
         await ctx.send(username)
     elif arg == "info":
         username = ctx.author.name
-        ref = db.reference("py/")
-        users_ref = ref.child('Users')
-        await ctx.send(users_ref.get(f"/{username}/coins"))
+        ref.child(username)
+        await ctx.send(ref.get("/coins"))
     else:
         await ctx.send("Not valid Command should be account join or info")
 
