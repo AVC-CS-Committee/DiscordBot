@@ -1,20 +1,44 @@
 from dotenv import load_dotenv
 import os
 import discord
-#import discord.ext
+# import discord.ext
 from discord.ext import commands
 from discord import app_commands
+import firebase_admin
+from firebase_admin import db, credentials
+
+cred = credentials.Certificate("credentials.json")
+firebase_admin.initialize_app(cred, {"databaseURL": "https://discord-bot-test-3c98c-default-rtdb.firebaseio.com/"})
+
+# ref = db.reference("py/")
+# users_ref = ref.child('Users')
+# users_ref.set({
+#     'TestName': {
+#         'Coins': 99,
+#         "attendance": 0
+#     }
+# })
+#
+# ref.get()
+# db.reference("/Username")
+#
+# test_ref = users_ref.child('TestName')
+# test_ref.update({
+#     "Coins": 15
+# })
+# print(ref.get("/coins"))
+
+
 
 # this loads the env file with the API key to be stored
 # locally make sure you have your .env file set
-
 load_dotenv('.env')
 disc_token: str = os.getenv('DISC_TOKEN')
 
 intents = discord.Intents.all()
 intents.message_content = True
 
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = commands.Bot(command_prefix='!!', intents=intents)
 
 
 @bot.event
@@ -36,6 +60,28 @@ async def hello(interaction: discord.Interaction):
 async def add(ctx, arg, arg2):
     arg3 = int(arg) + int(arg2)
     await ctx.send(arg3)
+
+
+@bot.command()
+async def account(ctx, arg):
+    if arg == "join":
+        username = ctx.author.name
+        ref = db.reference("py/")
+        users_ref = ref.child('Users')
+        users_ref.update({
+            username: {
+                'Coins': 20,
+                "attendance": 0
+            }
+        })
+        await ctx.send(username)
+    elif arg == "info":
+        username = ctx.author.name
+        ref = db.reference("py/")
+        users_ref = ref.child('Users')
+        await ctx.send(users_ref.get(f"/{username}/coins"))
+    else:
+        await ctx.send("Not valid Command should be account join or info")
 
 
 @bot.hybrid_command()
