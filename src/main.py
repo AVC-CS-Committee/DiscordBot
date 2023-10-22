@@ -2,12 +2,10 @@ from dotenv import load_dotenv
 import os
 import discord
 from discord import app_commands, guild
-from discord.ext import commands, tasks, menus
+from discord.ext import commands, tasks
 import asyncio
 import firebase_admin
 from firebase_admin import db, credentials, firestore
-
-
 
 # this loads the env file with the API key to be stored
 # locally make sure you have your .env file set
@@ -49,52 +47,34 @@ async def hello(interaction: discord.Interaction):
     await interaction.response.send_message(f"Hello !", ephemeral=False)
 
 
-@bot.tree.command(name='accountreset', description="Used to reset")
-@app_commands.checks.cooldown(1, 5.0)
-@app_commands.describe()
-async def account_reset(interaction=discord.Interaction):
-    userid = str(interaction.user.id)
-    username = interaction.user.name
+@bot.tree.command(name="daily", description="Daily coins")
+@app_commands.checks.cooldown(1, 86400)
+async def daily(interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=False)
+    daily_coin = 5
+    userid = str(interaction.user.id)  # gets users id to find the index
+    user_path = f'users/{userid}'  # sets the path to the users id
 
-    user_ref = users_ref.document(userid)
+    if user_path:
+        user_ref = db.document(user_path)  # sets the ref to the users file
+        user_data = user_ref.get()  # sets the ref for getting the users data for read only
 
-    user_data = user_ref.get()
+        coin_bal = user_data.get('Coins')  # reads the users data
 
-    if user_data is None:
-        await interaction.response.send_message("You need to create an account first.")
+        coin_new_bal = coin_bal + daily_coin  # adds users coins + the daily to make new amount
+
+        user_ref.update({'Coins': coin_new_bal})  # updates coins based on user ref
+
+        await interaction.followup.send(f"You got {daily_coin} coins. Your new balance is {coin_new_bal}.")
     else:
-        await interaction.response.send_message(
-            "Are you sure you want to reset your account? Type 'Y' to confirm or 'N' to cancel. You have 15 "
-            "seconds to respond.")
-
-        def check_response(message):
-            return message.author == interaction.user and message.content.lower() in ['y', 'n']
-
-        try:
-            response_message = await bot.wait_for('message', timeout=15.0, check=check_response)
-
-            if response_message.content.lower() == 'y':
-                # Reset the user's data
-                user_data = {
-                    'Username': username,  # Keep the username
-                    'Coins': 20,  # Reset coins to 20 (adjust as needed)
-                    'attendance': user_data.get('attendance'),  # Reset attendance to 0 (adjust as needed)
-                }
-                user_ref.set(user_data)
-                await interaction.response.send_message("Your account has been reset.")
-            else:
-                await interaction.response.send_message("Account reset canceled.")
-        except asyncio.TimeoutError:
-            await interaction.response.send_message("Timed out. Account reset canceled.")
+        await interaction.followup.send("You need to make an account first, try /account create")
 
 
-@account_reset.error
-async def accreset_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
-    if isinstance(error, discord.app_commands.CommandTree):
-        await interaction.response.send_message(content=f"You can only do this command once a day {str(error)}",
+
+@daily.error
+async def daily_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    await interaction.response.send_message(content=f"You can only do this command once a day {str(error)}",
                                                 ephemeral=True)
-    else:
-        await interaction.response.send_message(content="Error occurred Try again in a day", ephemeral=True)
 
 
 @bot.tree.command(name='account', description="Used to manage/create an account")
@@ -116,7 +96,10 @@ async def account(interaction: discord.Interaction, arg: str):
             user_data = {
                 'Username': username,
                 'Coins': 20,
-                'attendance': 0
+                'attendance': 0,
+                'wins': 0,
+                'loses': 0,
+                'games played': 0
             }
             user_ref.set(user_data)
             await interaction.response.send_message(f"Account created for {username}")
@@ -183,7 +166,7 @@ async def bal_error(interation: discord.Interaction, error: app_commands.AppComm
 @app_commands.describe(recipient="recipient's @", amount="Amount of coins to give")
 async def give(interaction: discord.Interaction, recipient: discord.User, amount: int):
     try:
-        if amount < 0:
+        if amount < 1:
             await interaction.response.send_message("Only enter valid numbers")
             return
         sender_id = interaction.user.id
@@ -212,7 +195,7 @@ async def give(interaction: discord.Interaction, recipient: discord.User, amount
             await interaction.response.send_message("Recipient does not exist in the database.")
             return
 
-        sender_coins = sender_data.get('Coins')
+        sender_coins = sender_data.get('coins')
         if sender_coins < amount:
             await interaction.response.send_message("You do not have enough coins to send.")
             return
