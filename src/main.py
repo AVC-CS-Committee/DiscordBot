@@ -19,7 +19,7 @@ os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_path
 cred = credentials.Certificate("credentials.json")
 firebase_admin.initialize_app(cred)
 db = firestore.Client()
-users_ref = db.collection('users')
+
 
 # cred = credentials.Certificate("credentials.json")
 # firebase_admin.initialize_app(cred, {"databaseURL": firebase_url})
@@ -47,6 +47,35 @@ async def hello(interaction: discord.Interaction):
     await interaction.response.send_message(f"Hello !", ephemeral=False)
 
 
+@bot.tree.command(name='leaderboard', description='Leaderboard')
+@app_commands.checks.cooldown(1, 30)
+async def leaderboard(interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=False)
+
+    users_ref = db.collection('users')
+
+    # (order by 'Coins' field in descending order)
+    leaderboard_query = users_ref.order_by('Coins', direction=firestore.Query.DESCENDING).limit(10)
+
+    leaderboard_data = leaderboard_query.stream()
+
+    if not leaderboard_data:
+        await interaction.followup.send("No users found in the leaderboard.")
+        return
+
+    leaderboard_message = "Leaderboard:\n"
+    position = 1
+
+    for doc in leaderboard_data:
+        user_data = doc.to_dict()
+        username = user_data['Username']
+        coins = user_data['Coins']
+        leaderboard_message += f"{position}. {username}: {coins} coins\n"
+        position += 1
+
+    await interaction.followup.send(leaderboard_message)
+
+
 @bot.tree.command(name="daily", description="Daily coins")
 @app_commands.checks.cooldown(1, 86400)
 async def daily(interaction: discord.Interaction):
@@ -70,11 +99,10 @@ async def daily(interaction: discord.Interaction):
         await interaction.followup.send("You need to make an account first, try /account create")
 
 
-
 @daily.error
 async def daily_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
     await interaction.response.send_message(content=f"You can only do this command once a day {str(error)}",
-                                                ephemeral=True)
+                                            ephemeral=True)
 
 
 @bot.tree.command(name='account', description="Used to manage/create an account")
@@ -166,7 +194,7 @@ async def bal_error(interation: discord.Interaction, error: app_commands.AppComm
 @app_commands.describe(recipient="recipient's @", amount="Amount of coins to give")
 async def give(interaction: discord.Interaction, recipient: discord.User, amount: int):
     try:
-        if amount < 1:
+        if amount < 0:
             await interaction.response.send_message("Only enter valid numbers")
             return
         sender_id = interaction.user.id
@@ -195,7 +223,7 @@ async def give(interaction: discord.Interaction, recipient: discord.User, amount
             await interaction.response.send_message("Recipient does not exist in the database.")
             return
 
-        sender_coins = sender_data.get('coins')
+        sender_coins = sender_data.get('Coins')
         if sender_coins < amount:
             await interaction.response.send_message("You do not have enough coins to send.")
             return
@@ -222,7 +250,7 @@ async def give_error(interaction: discord.Interaction, error: app_commands.AppCo
         await interaction.response.send_message(content=f"You can only do this command every 10.0 seconds {str(error)}",
                                                 ephemeral=True)
     else:
-        await interaction.response.send_message(content="Error occurred Try again in 10 seconds", ephemeral=True)
+        await interaction.response.send_message(content=f"Error occurred Try again in 10 seconds {str(error)}", ephemeral=True)
 
 
 @bot.command()
