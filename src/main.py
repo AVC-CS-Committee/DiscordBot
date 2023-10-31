@@ -19,7 +19,7 @@ os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_path
 cred = credentials.Certificate("credentials.json")
 firebase_admin.initialize_app(cred)
 db = firestore.Client()
-
+users_ref = db.collection('users')
 
 # cred = credentials.Certificate("credentials.json")
 # firebase_admin.initialize_app(cred, {"databaseURL": firebase_url})
@@ -46,6 +46,46 @@ async def on_ready():
 async def hello(interaction: discord.Interaction):
     await interaction.response.send_message(f"Hello !", ephemeral=False)
 
+@bot.tree.command(name="craft_test")
+async def craft_test(interaction: discord.Interaction):
+
+    userid = str(interaction.user.id)
+    user_ref = users_ref.document(userid)
+    user_data = user_ref.get()
+
+    if user_data:
+        inv = user_data.get("inventory")
+        items_ref = db.collection('items')
+        item_ref = items_ref.document()
+        item_data = item_ref.get()
+        item_list = item_data.to.list()
+        keys = list(inv.keys())
+
+        for i in item_data:
+            if keys == item_list:
+                await interaction.response.send_message("Item Crafted", ephemeral=True)
+                return
+            else:
+                await interaction.response.send_message("Item Not Crafted", ephemeral=True)
+                return
+@bot.tree.command(name='inv_test')
+async def inv_test(interaction: discord.Interaction):
+    userid = str(interaction.user.id)
+    user_ref = users_ref.document(userid)
+    user_data = user_ref.get()
+
+    if user_data:
+        inv = user_data.get('inventory')
+        keys = list(inv.keys())
+        values = list(inv.values())
+        inv_string = ""
+        for i in range(len(inv)):
+            inv_string += f"{keys[i]} x {values[i]}\n"
+
+        embed = discord.Embed(title="Inventory", description=f"{inv_string}", color=discord.Color.dark_purple())
+
+        await interaction.response.send_message(embed=embed)
+
 
 @bot.tree.command(name='leaderboard', description='Leaderboard')
 @app_commands.checks.cooldown(1, 30)
@@ -68,8 +108,8 @@ async def leaderboard(interaction: discord.Interaction):
 
     for doc in leaderboard_data:
         user_data = doc.to_dict()
-        username = user_data['Username']
-        coins = user_data['Coins']
+        username = user_data['username']
+        coins = user_data['coins']
         leaderboard_message += f"{position}. {username}: {coins} coins\n"
         position += 1
 
@@ -106,7 +146,7 @@ async def daily_error(interaction: discord.Interaction, error: app_commands.AppC
 
 
 @bot.tree.command(name='account', description="Used to manage/create an account")
-@app_commands.checks.cooldown(1, 60.0)
+@app_commands.checks.cooldown(1, 1.0)
 @app_commands.describe(arg="type 'Create' to make and account or 'Info' to see your account info")
 async def account(interaction: discord.Interaction, arg: str):
     if arg.lower() == "create":
@@ -121,16 +161,19 @@ async def account(interaction: discord.Interaction, arg: str):
             await interaction.response.send_message('You already have an account.')
             return
         else:
-            user_data = {
-                'Username': username,
-                'Coins': 20,
-                'attendance': 0,
-                'wins': 0,
-                'loses': 0,
-                'games played': 0
-            }
-            user_ref.set(user_data)
-            await interaction.response.send_message(f"Account created for {username}")
+            # sample user info
+            sample_user_ref = db.collection('users').document('sample')
+            sample_user_data = sample_user_ref.get()
+
+            # makes sure sample user file is there
+            if sample_user_data.exists:
+                sample_user_dict = sample_user_data.to_dict()
+
+                sample_user_dict['username'] = username  # sets username to the users name
+                new_user_ref = db.collection('users').document(userid)
+                new_user_ref.set(sample_user_dict)
+
+                await interaction.response.send_message(f"Account created for {username}")
 
     elif arg.lower() == "info":
         userid = str(interaction.user.id)
@@ -139,15 +182,55 @@ async def account(interaction: discord.Interaction, arg: str):
         user_data = user_ref.get()
 
         if user_data.exists:
-            username = user_data.get('Username')
-            coins_value = user_data.get('Coins')
+            username = user_data.get('username')
+            coins_value = user_data.get('coins')
             attendance_value = user_data.get('attendance')
-            await interaction.response.send_message(
-                f"User: {username}\nCoins: {coins_value}\nAttendance: {attendance_value}", ephemeral=True)
+            embed = discord.Embed(title="Account Info",
+                                  description=f"User: {username}\nCoins: {coins_value}\nAttendance: {attendance_value}",
+                                  color=discord.Color.dark_purple())
+            await interaction.response.send_message(embed=embed, ephemeral=True)
         else:
             await interaction.response.send_message("No data found for this user.")
     else:
         await interaction.response.send_message("Not a valid command. Should be 'account create' or 'account info'.")
+
+
+@bot.tree.command(name='user_update', description="Used to update all users")
+@app_commands.checks.cooldown(1, 1800.0)
+@app_commands.checks.has_role('DB')
+@app_commands.checks.has_permissions(administrator=True)
+async def user_update(interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=False)
+
+    sample_user_ref = db.collection('users').document('sample')
+    sample_user_data = sample_user_ref.get()
+
+    if sample_user_data.exists:
+        sample_user_dict = sample_user_data.to_dict()
+        users_ref = db.collection('users')
+        users = users_ref.stream()
+
+        for user in users:
+            user_id = user.id
+            user_ref = db.collection('users').document(user_id)
+            user_data = user_ref.get()
+
+            if user_data.exists:
+                user_dict = user_data.to_dict()
+                sample_user_dict.pop('username', None)
+                user_dict.update(sample_user_dict)
+                user_ref.set(user_dict)
+
+                print(f"Updated user {user_id}")
+
+        await interaction.followup.send("Updated all users.")
+    else:
+        await interaction.followup.send("No template user found.")
+
+
+@user_update.error
+async def user_update_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    await interaction.response.send_message("You dont have the required roles for this command", ephemeral=True)
 
 
 @account.error
@@ -172,8 +255,9 @@ async def balance(interaction: discord.Interaction):
     if user_data is None:
         await interaction.response.send_message("You need to create an account to start")
     else:
-        coins_value = user_data.get('Coins')
-        await interaction.response.send_message(f"Your AVC coin balance is **{coins_value}**")
+        coins_value = user_data.get('coins')
+        embed = discord.Embed(title="Balance", description=f"Coins: {coins_value}", color=discord.Color.dark_purple())
+        await interaction.response.send_message(embed=embed)
 
 
 @balance.error
@@ -223,17 +307,17 @@ async def give(interaction: discord.Interaction, recipient: discord.User, amount
             await interaction.response.send_message("Recipient does not exist in the database.")
             return
 
-        sender_coins = sender_data.get('Coins')
+        sender_coins = sender_data.get('coins')
         if sender_coins < amount:
             await interaction.response.send_message("You do not have enough coins to send.")
             return
 
         sender_new_balance = sender_coins - amount
-        recipient_coins = recipient_data.get('Coins')
+        recipient_coins = recipient_data.get('coins')
         recipient_new_balance = recipient_coins + amount
 
-        sender_ref.update({'Coins': sender_new_balance})
-        recipient_ref.update({'Coins': recipient_new_balance})
+        sender_ref.update({'coins': sender_new_balance})
+        recipient_ref.update({'coins': recipient_new_balance})
 
         sender_name = interaction.user.name
         recipient_name = recipient.name
@@ -241,7 +325,7 @@ async def give(interaction: discord.Interaction, recipient: discord.User, amount
         await interaction.response.send_message(f"{sender_name} sent {amount} coins to {recipient_name}.")
     except ValueError:
         await interaction.response.send_message(
-            "Invalid recipient. Please mention a valid user in the format `@username`.")
+            "Not valid Username.")
 
 
 @give.error
@@ -250,7 +334,8 @@ async def give_error(interaction: discord.Interaction, error: app_commands.AppCo
         await interaction.response.send_message(content=f"You can only do this command every 10.0 seconds {str(error)}",
                                                 ephemeral=True)
     else:
-        await interaction.response.send_message(content=f"Error occurred Try again in 10 seconds {str(error)}", ephemeral=True)
+        await interaction.response.send_message(content=f"Error occurred Try again in 10 seconds {str(error)}",
+                                                ephemeral=True)
 
 
 @bot.command()
