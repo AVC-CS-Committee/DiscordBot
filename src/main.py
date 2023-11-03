@@ -11,8 +11,6 @@ from firebase_admin import db, credentials, firestore
 # locally make sure you have your .env file set
 load_dotenv('.env')
 disc_token: str = os.getenv('DISC_TOKEN')
-# firebase_url: str = os.getenv('FIREBASE_URL')
-
 
 credential_path = "credentials.json"
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_path
@@ -21,9 +19,6 @@ firebase_admin.initialize_app(cred)
 db = firestore.Client()
 users_ref = db.collection('users')
 
-# cred = credentials.Certificate("credentials.json")
-# firebase_admin.initialize_app(cred, {"databaseURL": firebase_url})
-# db = firebase_admin.db.reference('/py/users')
 
 intents = discord.Intents.all()
 intents.message_content = True
@@ -46,28 +41,7 @@ async def on_ready():
 async def hello(interaction: discord.Interaction):
     await interaction.response.send_message(f"Hello !", ephemeral=False)
 
-@bot.tree.command(name="craft_test")
-async def craft_test(interaction: discord.Interaction):
 
-    userid = str(interaction.user.id)
-    user_ref = users_ref.document(userid)
-    user_data = user_ref.get()
-
-    if user_data:
-        inv = user_data.get("inventory")
-        items_ref = db.collection('items')
-        item_ref = items_ref.document()
-        item_data = item_ref.get()
-        item_list = item_data.to.list()
-        keys = list(inv.keys())
-
-        for i in item_data:
-            if keys == item_list:
-                await interaction.response.send_message("Item Crafted", ephemeral=True)
-                return
-            else:
-                await interaction.response.send_message("Item Not Crafted", ephemeral=True)
-                return
 @bot.tree.command(name='inv_test')
 async def inv_test(interaction: discord.Interaction):
     userid = str(interaction.user.id)
@@ -85,6 +59,8 @@ async def inv_test(interaction: discord.Interaction):
         embed = discord.Embed(title="Inventory", description=f"{inv_string}", color=discord.Color.dark_purple())
 
         await interaction.response.send_message(embed=embed)
+    else:
+        await interaction.response.send_message("")
 
 
 @bot.tree.command(name='leaderboard', description='Leaderboard')
