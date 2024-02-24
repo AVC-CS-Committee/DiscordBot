@@ -1,2 +1,4 @@
 
 src/.env
+credentials.json
+.env
