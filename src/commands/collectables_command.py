@@ -19,25 +19,25 @@ db = firestore.Client()
 users_ref = db.collection('users')
 
 
-class inventory_command(commands.Cog):
+class collectables_command(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("Inventory online")
+        print("Collectables online")
 
-    @app_commands.command(name='inventory')
-    async def inventory(self, interaction: discord.Interaction):
+    @app_commands.command(name='collectables')
+    async def collectables(self, interaction: discord.Interaction):
         userid = str(interaction.user.id)
         user_ref = users_ref.document(userid)
         user_data = user_ref.get()
 
         if user_data:
-            inv = user_data.get('inventory')
+            collec = user_data.get('collectables')
 
-            embed = discord.Embed(title="Inventory",
-                                  description='\n'.join([f"{item} x {qty} " for item, qty in inv.items()]),
+            embed = discord.Embed(title="Collectables",
+                                  description='\n'.join([f"{item} x {qty} " for item, qty in collec.items()]),
                                   color=discord.Color.dark_purple())
 
             await interaction.response.send_message(embed=embed)
@@ -45,4 +45,4 @@ class inventory_command(commands.Cog):
             await interaction.response.send_message("Make an account first please.")
 
 async def setup(bot):
-    await bot.add_cog(inventory_command(bot))
+    await bot.add_cog(collectables_command(bot))

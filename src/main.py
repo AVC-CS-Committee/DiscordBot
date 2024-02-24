@@ -14,7 +14,7 @@ disc_token: str = os.getenv('DISC_TOKEN')
 
 credential_path = "credentials.json"
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_path
-cred = credentials.Certificate("credentials.json")
+cred = credentials.Certificate(credential_path)
 firebase_admin.initialize_app(cred)
 db = firestore.Client()
 users_ref = db.collection('users')
@@ -158,7 +158,7 @@ async def on_ready():
 #         coin_bal = user_data.get('coins')  # reads the users data
 #
 #         coin_new_bal = coin_bal + daily_coin  # adds users coins + the daily to make new amount
-#
+# 
 #         user_ref.update({'coins': coin_new_bal})  # updates coins based on user ref
 #
 #         await interaction.followup.send(f"You got {daily_coin} coins. Your new balance is {coin_new_bal}.")
