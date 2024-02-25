@@ -27,8 +27,8 @@ class daily_command(commands.Cog):
     async def on_ready(self):
         print("Daily online")
 
-    @commands.command(name='daily')
-    @commands.cooldown(1, 86400)
+    @app_commands.command(name='daily')
+    @app_commands.checks.cooldown(1, 86400)
     async def daily(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
         daily_coin = 5

@@ -41,6 +41,8 @@ async def on_ready():
         print(f"Synced {len(synced)} Commands")
     except Exception as e:
         print(e)
+
+asyncio.run(main())
 #
 #
 # @bot.tree.command(name='hello')
@@ -158,7 +160,7 @@ async def on_ready():
 #         coin_bal = user_data.get('coins')  # reads the users data
 #
 #         coin_new_bal = coin_bal + daily_coin  # adds users coins + the daily to make new amount
-# 
+#
 #         user_ref.update({'coins': coin_new_bal})  # updates coins based on user ref
 #
 #         await interaction.followup.send(f"You got {daily_coin} coins. Your new balance is {coin_new_bal}.")
@@ -385,5 +387,3 @@ async def on_ready():
 #     arg3 = int(arg) + int(arg2)
 #     await ctx.send(arg3)
 
-
-asyncio.run(main())

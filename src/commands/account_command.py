@@ -28,6 +28,8 @@ class account_command(commands.Cog):
         print("Account online")
 
     @app_commands.command(name='account')
+    @app_commands.checks.cooldown(1, 1.0)
+    @app_commands.describe(arg="type 'Create' to make and account or 'Info' to see your account info")
     async def account(self, interaction: discord.Interaction, arg: str):
         if arg.lower() == "create":
             userid = str(interaction.user.id)
@@ -73,6 +75,15 @@ class account_command(commands.Cog):
                 await interaction.response.send_message("No data found for this user.")
         else:
             await interaction.response.send_message("Not a valid command. Should be 'account create' or 'account info'.")
+
+    @account.error
+    async def acc_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
+        if isinstance(error, discord.app_commands.CommandTree):
+            await interaction.response.send_message(content=f"You can only do this command every 60.0 seconds {str(error)}",
+                                                    ephemeral=True)
+        else:
+            await interaction.response.send_message(content=f"Error occurred Try again in 60 seconds {str(error)}",
+                                                    ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(account_command(bot))
