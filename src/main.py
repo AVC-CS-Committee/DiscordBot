@@ -1,23 +1,13 @@
 from dotenv import load_dotenv
 import os
 import discord
-from discord import app_commands, guild
 from discord.ext import commands, tasks
 import asyncio
-import firebase_admin
-from firebase_admin import db, credentials, firestore
 
 # this loads the env file with the API key to be stored
 # locally make sure you have your .env file set
 load_dotenv('.env')
 disc_token: str = os.getenv('DISC_TOKEN')
-
-credential_path = "credentials.json"
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_path
-cred = credentials.Certificate(credential_path)
-firebase_admin.initialize_app(cred)
-db = firestore.Client()
-users_ref = db.collection('users')
 
 intents = discord.Intents.all()
 intents.message_content = True
