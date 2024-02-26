@@ -19,7 +19,7 @@ db = firestore.Client()
 users_ref = db.collection('users')
 
 
-class daily_command(commands.Cog):
+class DailyCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -57,4 +57,4 @@ class daily_command(commands.Cog):
 
 
 async def setup(bot):
-    await bot.add_cog(daily_command(bot))
+    await bot.add_cog(DailyCommand(bot))

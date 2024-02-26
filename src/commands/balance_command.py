@@ -19,7 +19,7 @@ db = firestore.Client()
 users_ref = db.collection('users')
 
 
-class balance_command(commands.Cog):
+class BalanceCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -57,4 +57,4 @@ class balance_command(commands.Cog):
                                                    ephemeral=True)
 
 async def setup(bot):
-    await bot.add_cog(balance_command(bot))
+    await bot.add_cog(BalanceCommand(bot))

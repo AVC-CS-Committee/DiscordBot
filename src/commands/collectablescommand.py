@@ -9,17 +9,18 @@ from firebase_admin import db, credentials, firestore
 import src
 
 # this loads the env file with the API key to be stored
-# locally make sure you have your .env file set
+# locally make sure you have your .env file set in your scr directory
+# you need two credentials.json files one in the scr and the other in the commands folder
 load_dotenv('.env')
 credential_path = "credentials.json"
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_path
 cred = credentials.Certificate(credential_path)
 
 db = firestore.Client()
-users_ref = db.collection('users')
+users_ref = db.collection('users')  # reference to the users collection
 
 
-class collectables_command(commands.Cog):
+class CollectablesCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -30,19 +31,21 @@ class collectables_command(commands.Cog):
     @app_commands.command(name='collectables')
     async def collectables(self, interaction: discord.Interaction):
         userid = str(interaction.user.id)
-        user_ref = users_ref.document(userid)
+        user_ref = users_ref.document(userid)  # reference to the exact users document
         user_data = user_ref.get()
 
-        if user_data:
-            collec = user_data.get('collectables')
+        if user_data: # if the user data exists
+            users_collectables = user_data.get('collectables')
 
             embed = discord.Embed(title="Collectables",
-                                  description='\n'.join([f"{item} x {qty} " for item, qty in collec.items()]),
+                                  description='\n'.join(
+                                      [f"{item} x {qty} " for item, qty in users_collectables.items()]),
                                   color=discord.Color.dark_purple())
 
             await interaction.response.send_message(embed=embed)
         else:
             await interaction.response.send_message("Make an account first please.")
 
+
 async def setup(bot):
-    await bot.add_cog(collectables_command(bot))
+    await bot.add_cog(CollectablesCommand(bot))

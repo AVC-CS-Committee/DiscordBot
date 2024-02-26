@@ -19,7 +19,7 @@ db = firestore.Client()
 users_ref = db.collection('users')
 
 
-class userupdate_command(commands.Cog):
+class UserUpdateCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -74,10 +74,17 @@ class userupdate_command(commands.Cog):
         else:
             await interaction.followup.send("No template user found.")
 
-
     @user_update.error
-    async def user_update_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
-        await interaction.response.send_message(f"You dont have the required roles for this command{error}", ephemeral=True)
+    async def user_update_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
+        if isinstance(error, app_commands.CheckFailure):
+            await interaction.response.send_message(
+                "You don't have the required roles or permissions for this command.", ephemeral=True)
+        elif isinstance(error, app_commands.CommandOnCooldown):
+            await interaction.response.send_message("This command is on cooldown. Please try again later.",
+                                                    ephemeral=True)
+        else:
+            await interaction.response.send_message(f"An error occurred: {error}", ephemeral=True)
+
 
 async def setup(bot):
-    await bot.add_cog(userupdate_command(bot))
+    await bot.add_cog(UserUpdateCommand(bot))

@@ -19,7 +19,7 @@ db = firestore.Client()
 users_ref = db.collection('users')
 
 
-class inventory_command(commands.Cog):
+class InventoryCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -45,4 +45,4 @@ class inventory_command(commands.Cog):
             await interaction.response.send_message("Make an account first please.")
 
 async def setup(bot):
-    await bot.add_cog(inventory_command(bot))
+    await bot.add_cog(InventoryCommand(bot))

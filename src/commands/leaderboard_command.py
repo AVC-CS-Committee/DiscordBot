@@ -19,7 +19,7 @@ db = firestore.Client()
 users_ref = db.collection('users')
 
 
-class leaderboard_command(commands.Cog):
+class LeaderboardCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -55,4 +55,4 @@ class leaderboard_command(commands.Cog):
 
 
 async def setup(bot):
-    await bot.add_cog(leaderboard_command(bot))
+    await bot.add_cog(LeaderboardCommand(bot))

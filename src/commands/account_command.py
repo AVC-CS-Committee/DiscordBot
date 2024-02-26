@@ -19,7 +19,7 @@ db = firestore.Client()
 users_ref = db.collection('users')
 
 
-class account_command(commands.Cog):
+class AccountCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -86,4 +86,4 @@ class account_command(commands.Cog):
                                                     ephemeral=True)
 
 async def setup(bot):
-    await bot.add_cog(account_command(bot))
+    await bot.add_cog(AccountCommand(bot))

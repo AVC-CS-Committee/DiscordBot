@@ -29,9 +29,10 @@ async def on_ready():
     try:
         synced = await bot.tree.sync()
         print(f"Synced {len(synced)} Commands")
+        for command in synced:
+            print(command.name)
     except Exception as e:
         print(e)
-
 asyncio.run(main())
 #
 #

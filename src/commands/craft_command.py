@@ -19,7 +19,7 @@ db = firestore.Client()
 users_ref = db.collection('users')
 
 
-class craft_command(commands.Cog):
+class CraftCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -73,4 +73,4 @@ class craft_command(commands.Cog):
             await interaction.response.send_message("User not found.")
 
 async def setup(bot):
-    await bot.add_cog(craft_command(bot))
+    await bot.add_cog(CraftCommand(bot))
