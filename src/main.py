@@ -14,7 +14,7 @@ disc_token: str = os.getenv('DISC_TOKEN')
 intents = discord.Intents.all()
 intents.message_content = True
 
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = commands.Bot(command_prefix='-', intents=intents)
 
 
 @bot.event
