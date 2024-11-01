@@ -37,11 +37,11 @@ class TemplateCommand(commands.Cog):
 
     @commands.command(name='template', description="Template command for new commands")
     async def template(self, ctx, arg1, arg2: str = "hello"):
-        username = ctx.author.name
-        channelid = ctx.channel.id
-        channelname = ctx.channel.name
-        guildid = ctx.guild.id
-        guildname = ctx.guild.name
+        username = ctx.author.name # gets the users name
+        channelid = ctx.channel.id # gets the channel id
+        channelname = ctx.channel.name # gets the channel name
+        guildid = ctx.guild.id  # gets the guild id
+        guildname = ctx.guild.name # gets the guild name
 
         message = await ctx.send(
             f"Hello {username} you called the command in the channel {channelname} with the id {channelid} in the guild "

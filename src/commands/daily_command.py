@@ -31,7 +31,9 @@ class DailyCommand(commands.Cog):
     @app_commands.checks.cooldown(1, 86400)
     async def daily(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
-        daily_coin = 5
+
+        daily_coin = 5 # FIX LATER TO STORE NUMBER IN DATA BASE TO ALLOW FOR EASY CHANGES
+
         userid = str(interaction.user.id)  # gets users id to find the index
         user_path = f'users/{userid}'  # sets the path to the users id
 
@@ -51,7 +53,7 @@ class DailyCommand(commands.Cog):
 
 
     @daily.error
-    async def daily_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    async def daily_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         await interaction.response.send_message(content=f"You can only do this command once a day {str(error)}",
                                                 ephemeral=True)
 
